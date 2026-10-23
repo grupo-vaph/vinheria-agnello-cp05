@@ -1,0 +1,872 @@
+{
+  "info": {
+    "name": "Vinheria Agnello - CP05 (FIWARE NGSIv2)",
+    "description": "Provisionamento, consulta e historico do dispositivo da Vinheria Agnello no FIWARE (IoT Agent MQTT UltraLight + Orion + STH-Comet). Ajuste as variaveis da colecao (url, deviceId) antes de usar.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Verificacao do servidor",
+      "item": [
+        {
+          "name": "1.1 IoT Agent - Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://{{url}}:4041/iot/about",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "4041",
+              "path": [
+                "iot",
+                "about"
+              ]
+            },
+            "description": "Confirma que o IoT Agent MQTT responde."
+          }
+        },
+        {
+          "name": "1.2 Orion - Versao",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://{{url}}:1026/version",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "1026",
+              "path": [
+                "version"
+              ]
+            },
+            "description": "Confirma que o Orion Context Broker responde."
+          }
+        },
+        {
+          "name": "1.3 STH-Comet - Versao",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://{{url}}:8666/version",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "8666",
+              "path": [
+                "version"
+              ]
+            },
+            "description": "Confirma que o STH-Comet responde."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Provisionamento (fazer uma vez)",
+      "item": [
+        {
+          "name": "2.1 Criar Service Group (apikey TEF)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "fiware-service",
+                "value": "{{service}}"
+              },
+              {
+                "key": "fiware-servicepath",
+                "value": "{{servicepath}}"
+              }
+            ],
+            "url": {
+              "raw": "http://{{url}}:4041/iot/services",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "4041",
+              "path": [
+                "iot",
+                "services"
+              ]
+            },
+            "description": "Cria o grupo de servico com a apikey TEF. Se o professor ja criou, retorna 409 (DUPLICATE_GROUP) - pode seguir.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"services\": [\n    {\n      \"apikey\": \"{{apikey}}\",\n      \"cbroker\": \"http://orion:1026\",\n      \"entity_type\": \"{{entityType}}\",\n      \"resource\": \"\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "2.2 Provisionar dispositivo da Vinheria",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "fiware-service",
+                "value": "{{service}}"
+              },
+              {
+                "key": "fiware-servicepath",
+                "value": "{{servicepath}}"
+              }
+            ],
+            "url": {
+              "raw": "http://{{url}}:4041/iot/devices",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "4041",
+              "path": [
+                "iot",
+                "devices"
+              ]
+            },
+            "description": "Registra o ESP32 no IoT Agent usando o Smart Data Model IndoorEnvironmentObserved (dataModel.Environment). Mapeia o payload UltraLight (t,h,i,l,a,s,ts) para atributos NGSIv2 e declara os comandos on/off.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"devices\": [\n    {\n      \"device_id\": \"{{deviceId}}\",\n      \"apikey\": \"{{apikey}}\",\n      \"entity_name\": \"{{entityId}}\",\n      \"entity_type\": \"{{entityType}}\",\n      \"protocol\": \"PDI-IoTA-UltraLight\",\n      \"transport\": \"MQTT\",\n      \"timestamp\": true,\n      \"commands\": [\n        {\n          \"name\": \"on\",\n          \"type\": \"command\"\n        },\n        {\n          \"name\": \"off\",\n          \"type\": \"command\"\n        }\n      ],\n      \"attributes\": [\n        {\n          \"object_id\": \"t\",\n          \"name\": \"temperature\",\n          \"type\": \"Number\",\n          \"metadata\": {\n            \"unitCode\": {\n              \"type\": \"Text\",\n              \"value\": \"CEL\"\n            }\n          }\n        },\n        {\n          \"object_id\": \"h\",\n          \"name\": \"relativeHumidity\",\n          \"type\": \"Number\",\n          \"metadata\": {\n            \"unitCode\": {\n              \"type\": \"Text\",\n              \"value\": \"P1\"\n            }\n          }\n        },\n        {\n          \"object_id\": \"i\",\n          \"name\": \"illuminance\",\n          \"type\": \"Number\",\n          \"metadata\": {\n            \"unitCode\": {\n              \"type\": \"Text\",\n              \"value\": \"LUX\"\n            }\n          }\n        },\n        {\n          \"object_id\": \"l\",\n          \"name\": \"luminosity\",\n          \"type\": \"Number\",\n          \"metadata\": {\n            \"unitCode\": {\n              \"type\": \"Text\",\n              \"value\": \"P1\"\n            }\n          }\n        },\n        {\n          \"object_id\": \"a\",\n          \"name\": \"alertStatus\",\n          \"type\": \"Text\"\n        },\n        {\n          \"object_id\": \"s\",\n          \"name\": \"alarmStatus\",\n          \"type\": \"Text\"\n        },\n        {\n          \"object_id\": \"ts\",\n          \"name\": \"dateObserved\",\n          \"type\": \"DateTime\"\n        }\n      ],\n      \"static_attributes\": [\n        {\n          \"name\": \"name\",\n          \"type\": \"Text\",\n          \"value\": \"Adega Vinheria Agnello\"\n        },\n        {\n          \"name\": \"description\",\n          \"type\": \"Text\",\n          \"value\": \"Monitoramento de temperatura, umidade e luminosidade da adega - ESP32, DHT22 e LDR\"\n        },\n        {\n          \"name\": \"refDevice\",\n          \"type\": \"Relationship\",\n          \"value\": \"urn:ngsi-ld:Device:{{deviceId}}\"\n        }\n      ]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "2.3 Listar dispositivos provisionados",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "fiware-service",
+                "value": "{{service}}"
+              },
+              {
+                "key": "fiware-servicepath",
+                "value": "{{servicepath}}"
+              }
+            ],
+            "url": {
+              "raw": "http://{{url}}:4041/iot/devices",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "4041",
+              "path": [
+                "iot",
+                "devices"
+              ]
+            },
+            "description": "Confere se o dispositivo aparece na lista."
+          }
+        },
+        {
+          "name": "2.4 Criar assinatura para o historico (STH-Comet)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "fiware-service",
+                "value": "{{service}}"
+              },
+              {
+                "key": "fiware-servicepath",
+                "value": "{{servicepath}}"
+              }
+            ],
+            "url": {
+              "raw": "http://{{url}}:1026/v2/subscriptions",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "1026",
+              "path": [
+                "v2",
+                "subscriptions"
+              ]
+            },
+            "description": "Toda alteracao dos atributos da entidade e notificada ao STH-Comet, que grava o historico no MongoDB. Rode so UMA vez (rodar de novo cria assinatura duplicada).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Vinheria Agnello - envia historico das leituras para o STH-Comet\",\n  \"subject\": {\n    \"entities\": [\n      {\n        \"id\": \"{{entityId}}\",\n        \"type\": \"{{entityType}}\"\n      }\n    ],\n    \"condition\": {\n      \"attrs\": [\n        \"temperature\",\n        \"relativeHumidity\",\n        \"illuminance\",\n        \"luminosity\",\n        \"alertStatus\",\n        \"dateObserved\"\n      ]\n    }\n  },\n  \"notification\": {\n    \"http\": {\n      \"url\": \"http://{{url}}:8666/notify\"\n    },\n    \"attrs\": [\n      \"temperature\",\n      \"relativeHumidity\",\n      \"illuminance\",\n      \"luminosity\",\n      \"alertStatus\",\n      \"dateObserved\"\n    ],\n    \"attrsFormat\": \"legacy\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "2.5 Listar assinaturas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "fiware-service",
+                "value": "{{service}}"
+              },
+              {
+                "key": "fiware-servicepath",
+                "value": "{{servicepath}}"
+              }
+            ],
+            "url": {
+              "raw": "http://{{url}}:1026/v2/subscriptions",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "1026",
+              "path": [
+                "v2",
+                "subscriptions"
+              ]
+            },
+            "description": "Confere a assinatura (status, timesSent, lastNotification)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Leitura em tempo real (NGSIv2 / Orion)",
+      "item": [
+        {
+          "name": "3.1 Entidade completa (NGSIv2)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "fiware-service",
+                "value": "{{service}}"
+              },
+              {
+                "key": "fiware-servicepath",
+                "value": "{{servicepath}}"
+              }
+            ],
+            "url": {
+              "raw": "http://{{url}}:1026/v2/entities/{{entityId}}",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "1026",
+              "path": [
+                "v2",
+                "entities",
+                "{{entityId}}"
+              ]
+            },
+            "description": "Retorna a entidade IndoorEnvironmentObserved com valores, tipos, metadados (unitCode e TimeInstant)."
+          }
+        },
+        {
+          "name": "3.2 Entidade em keyValues",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "fiware-service",
+                "value": "{{service}}"
+              },
+              {
+                "key": "fiware-servicepath",
+                "value": "{{servicepath}}"
+              }
+            ],
+            "url": {
+              "raw": "http://{{url}}:1026/v2/entities/{{entityId}}?options=keyValues",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "1026",
+              "path": [
+                "v2",
+                "entities",
+                "{{entityId}}"
+              ],
+              "query": [
+                {
+                  "key": "options",
+                  "value": "keyValues"
+                }
+              ]
+            },
+            "description": "Formato simplificado, so chave/valor."
+          }
+        },
+        {
+          "name": "3.3 Somente temperatura, umidade e luz",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "fiware-service",
+                "value": "{{service}}"
+              },
+              {
+                "key": "fiware-servicepath",
+                "value": "{{servicepath}}"
+              }
+            ],
+            "url": {
+              "raw": "http://{{url}}:1026/v2/entities/{{entityId}}/attrs?attrs=temperature,relativeHumidity,luminosity,illuminance,dateObserved",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "1026",
+              "path": [
+                "v2",
+                "entities",
+                "{{entityId}}",
+                "attrs"
+              ],
+              "query": [
+                {
+                  "key": "attrs",
+                  "value": "temperature,relativeHumidity,luminosity,illuminance,dateObserved"
+                }
+              ]
+            },
+            "description": "Atributos principais com o timestamp da leitura."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Comandos (escrita via NGSIv2)",
+      "item": [
+        {
+          "name": "4.1 Ligar alarme sonoro (on)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "fiware-service",
+                "value": "{{service}}"
+              },
+              {
+                "key": "fiware-servicepath",
+                "value": "{{servicepath}}"
+              }
+            ],
+            "url": {
+              "raw": "http://{{url}}:1026/v2/entities/{{entityId}}/attrs",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "1026",
+              "path": [
+                "v2",
+                "entities",
+                "{{entityId}}",
+                "attrs"
+              ]
+            },
+            "description": "O Orion repassa ao IoT Agent, que publica '<deviceId>@on|' no topico /TEF/<deviceId>/cmd.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"on\": {\n    \"type\": \"command\",\n    \"value\": \"\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "4.2 Silenciar alarme sonoro (off)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "fiware-service",
+                "value": "{{service}}"
+              },
+              {
+                "key": "fiware-servicepath",
+                "value": "{{servicepath}}"
+              }
+            ],
+            "url": {
+              "raw": "http://{{url}}:1026/v2/entities/{{entityId}}/attrs",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "1026",
+              "path": [
+                "v2",
+                "entities",
+                "{{entityId}}",
+                "attrs"
+              ]
+            },
+            "description": "Publica '<deviceId>@off|' no topico de comandos.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"off\": {\n    \"type\": \"command\",\n    \"value\": \"\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Historico (STH-Comet)",
+      "item": [
+        {
+          "name": "5.1 Temperatura - ultimas 30 leituras",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "fiware-service",
+                "value": "{{service}}"
+              },
+              {
+                "key": "fiware-servicepath",
+                "value": "{{servicepath}}"
+              }
+            ],
+            "url": {
+              "raw": "http://{{url}}:8666/STH/v1/contextEntities/type/{{entityType}}/id/{{entityId}}/attributes/temperature?lastN=30",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "8666",
+              "path": [
+                "STH",
+                "v1",
+                "contextEntities",
+                "type",
+                "{{entityType}}",
+                "id",
+                "{{entityId}}",
+                "attributes",
+                "temperature"
+              ],
+              "query": [
+                {
+                  "key": "lastN",
+                  "value": "30"
+                }
+              ]
+            },
+            "description": "Historico bruto."
+          }
+        },
+        {
+          "name": "5.2 Umidade - ultimas 30 leituras",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "fiware-service",
+                "value": "{{service}}"
+              },
+              {
+                "key": "fiware-servicepath",
+                "value": "{{servicepath}}"
+              }
+            ],
+            "url": {
+              "raw": "http://{{url}}:8666/STH/v1/contextEntities/type/{{entityType}}/id/{{entityId}}/attributes/relativeHumidity?lastN=30",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "8666",
+              "path": [
+                "STH",
+                "v1",
+                "contextEntities",
+                "type",
+                "{{entityType}}",
+                "id",
+                "{{entityId}}",
+                "attributes",
+                "relativeHumidity"
+              ],
+              "query": [
+                {
+                  "key": "lastN",
+                  "value": "30"
+                }
+              ]
+            },
+            "description": "Historico bruto."
+          }
+        },
+        {
+          "name": "5.3 Luminosidade - ultimas 30 leituras",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "fiware-service",
+                "value": "{{service}}"
+              },
+              {
+                "key": "fiware-servicepath",
+                "value": "{{servicepath}}"
+              }
+            ],
+            "url": {
+              "raw": "http://{{url}}:8666/STH/v1/contextEntities/type/{{entityType}}/id/{{entityId}}/attributes/luminosity?lastN=30",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "8666",
+              "path": [
+                "STH",
+                "v1",
+                "contextEntities",
+                "type",
+                "{{entityType}}",
+                "id",
+                "{{entityId}}",
+                "attributes",
+                "luminosity"
+              ],
+              "query": [
+                {
+                  "key": "lastN",
+                  "value": "30"
+                }
+              ]
+            },
+            "description": "Historico bruto."
+          }
+        },
+        {
+          "name": "5.4 Temperatura - paginado (100 por pagina)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "fiware-service",
+                "value": "{{service}}"
+              },
+              {
+                "key": "fiware-servicepath",
+                "value": "{{servicepath}}"
+              }
+            ],
+            "url": {
+              "raw": "http://{{url}}:8666/STH/v1/contextEntities/type/{{entityType}}/id/{{entityId}}/attributes/temperature?hLimit=100&hOffset=0",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "8666",
+              "path": [
+                "STH",
+                "v1",
+                "contextEntities",
+                "type",
+                "{{entityType}}",
+                "id",
+                "{{entityId}}",
+                "attributes",
+                "temperature"
+              ],
+              "query": [
+                {
+                  "key": "hLimit",
+                  "value": "100"
+                },
+                {
+                  "key": "hOffset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Use hOffset=100, 200... para as proximas paginas."
+          }
+        },
+        {
+          "name": "5.5 Temperatura - media por hora no periodo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "fiware-service",
+                "value": "{{service}}"
+              },
+              {
+                "key": "fiware-servicepath",
+                "value": "{{servicepath}}"
+              }
+            ],
+            "url": {
+              "raw": "http://{{url}}:8666/STH/v1/contextEntities/type/{{entityType}}/id/{{entityId}}/attributes/temperature?aggrMethod=sum&aggrPeriod=hour&dateFrom=2026-10-01T00:00:00.000Z&dateTo=2026-12-31T23:59:59.999Z",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "8666",
+              "path": [
+                "STH",
+                "v1",
+                "contextEntities",
+                "type",
+                "{{entityType}}",
+                "id",
+                "{{entityId}}",
+                "attributes",
+                "temperature"
+              ],
+              "query": [
+                {
+                  "key": "aggrMethod",
+                  "value": "sum"
+                },
+                {
+                  "key": "aggrPeriod",
+                  "value": "hour"
+                },
+                {
+                  "key": "dateFrom",
+                  "value": "2026-10-01T00:00:00.000Z"
+                },
+                {
+                  "key": "dateTo",
+                  "value": "2026-12-31T23:59:59.999Z"
+                }
+              ]
+            },
+            "description": "Agregado por hora (sum e samples por intervalo: media = sum/samples). Tambem aceita aggrMethod=max, min, sum2 e aggrPeriod=day, month."
+          }
+        },
+        {
+          "name": "5.6 Umidade - maxima por dia",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "fiware-service",
+                "value": "{{service}}"
+              },
+              {
+                "key": "fiware-servicepath",
+                "value": "{{servicepath}}"
+              }
+            ],
+            "url": {
+              "raw": "http://{{url}}:8666/STH/v1/contextEntities/type/{{entityType}}/id/{{entityId}}/attributes/relativeHumidity?aggrMethod=max&aggrPeriod=day&dateFrom=2026-10-01T00:00:00.000Z&dateTo=2026-12-31T23:59:59.999Z",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "8666",
+              "path": [
+                "STH",
+                "v1",
+                "contextEntities",
+                "type",
+                "{{entityType}}",
+                "id",
+                "{{entityId}}",
+                "attributes",
+                "relativeHumidity"
+              ],
+              "query": [
+                {
+                  "key": "aggrMethod",
+                  "value": "max"
+                },
+                {
+                  "key": "aggrPeriod",
+                  "value": "day"
+                },
+                {
+                  "key": "dateFrom",
+                  "value": "2026-10-01T00:00:00.000Z"
+                },
+                {
+                  "key": "dateTo",
+                  "value": "2026-12-31T23:59:59.999Z"
+                }
+              ]
+            },
+            "description": "Maximo diario no periodo."
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Manutencao (cuidado)",
+      "item": [
+        {
+          "name": "6.1 Remover dispositivo",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "fiware-service",
+                "value": "{{service}}"
+              },
+              {
+                "key": "fiware-servicepath",
+                "value": "{{servicepath}}"
+              }
+            ],
+            "url": {
+              "raw": "http://{{url}}:4041/iot/devices/{{deviceId}}",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "4041",
+              "path": [
+                "iot",
+                "devices",
+                "{{deviceId}}"
+              ]
+            },
+            "description": "Remove o dispositivo do IoT Agent (use so se precisar provisionar de novo)."
+          }
+        },
+        {
+          "name": "6.2 Remover entidade do Orion",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "fiware-service",
+                "value": "{{service}}"
+              },
+              {
+                "key": "fiware-servicepath",
+                "value": "{{servicepath}}"
+              }
+            ],
+            "url": {
+              "raw": "http://{{url}}:1026/v2/entities/{{entityId}}",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "1026",
+              "path": [
+                "v2",
+                "entities",
+                "{{entityId}}"
+              ]
+            },
+            "description": "Remove a entidade de contexto."
+          }
+        },
+        {
+          "name": "6.3 Remover assinatura (cole o id)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "fiware-service",
+                "value": "{{service}}"
+              },
+              {
+                "key": "fiware-servicepath",
+                "value": "{{servicepath}}"
+              }
+            ],
+            "url": {
+              "raw": "http://{{url}}:1026/v2/subscriptions/COLE_O_ID_AQUI",
+              "protocol": "http",
+              "host": [
+                "{{url}}"
+              ],
+              "port": "1026",
+              "path": [
+                "v2",
+                "subscriptions",
+                "COLE_O_ID_AQUI"
+              ]
+            },
+            "description": "Troque COLE_O_ID_AQUI pelo campo id da assinatura (veja na 2.5)."
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "url",
+      "value": "3.135.234.101"
+    },
+    {
+      "key": "service",
+      "value": "smart"
+    },
+    {
+      "key": "servicepath",
+      "value": "/"
+    },
+    {
+      "key": "apikey",
+      "value": "TEF"
+    },
+    {
+      "key": "deviceId",
+      "value": "vinharia027"
+    },
+    {
+      "key": "entityType",
+      "value": "IndoorEnvironmentObserved"
+    },
+    {
+      "key": "entityId",
+      "value": "urn:ngsi-ld:IndoorEnvironmentObserved:vinharia027"
+    }
+  ]
+}

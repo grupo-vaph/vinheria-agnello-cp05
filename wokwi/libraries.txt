@@ -1,0 +1,5 @@
+# Bibliotecas usadas no Wokwi (aba "Library Manager")
+PubSubClient
+DHT sensor library
+Adafruit Unified Sensor
+LiquidCrystal I2C
