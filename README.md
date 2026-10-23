@@ -24,7 +24,7 @@ Fase 2 do projeto da Vinheria Agnello: o ESP32 lê **temperatura e umidade (DHT2
 | Item | Link |
 |---|---|
 | Simulação no Wokwi | `https://wokwi.com/projects/478679326743721985` |
-| Vídeo de demonstração | `COLE_AQUI_O_LINK_DO_VIDEO` |
+| Vídeo de demonstração | `https://youtu.be/tecmeWA-TFY?si=2WtMHZ_DiZYisiPF` |
 
 ---
 
